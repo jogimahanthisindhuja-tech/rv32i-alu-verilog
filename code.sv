@@ -39,9 +39,9 @@ module riscv_alu (
     output wire        negative      // result[31]
 );
 
-    // ----------------------------------------------------------
+   
     // ALU operation encoding
-    // ----------------------------------------------------------
+    
     localparam ALU_ADD  = 4'b0000;
     localparam ALU_SUB  = 4'b0001;
     localparam ALU_AND  = 4'b0010;
@@ -59,9 +59,9 @@ module riscv_alu (
     localparam ALU_BGE  = 4'b1110;
     localparam ALU_BLTU = 4'b1111;
 
-    // ----------------------------------------------------------
+  
     // Internal wires
-    // ----------------------------------------------------------
+    
     wire [31:0] add_result;
     wire [31:0] sub_result;
     wire [32:0] add_ext;    // 33-bit for carry detection
@@ -72,9 +72,9 @@ module riscv_alu (
     wire signed [31:0] signed_a = $signed(operand_a);
     wire signed [31:0] signed_b = $signed(operand_b);
 
-    // ----------------------------------------------------------
+  
     // Adder / subtractor  (shared hardware)
-    // ----------------------------------------------------------
+    
     assign add_ext   = {1'b0, operand_a} + {1'b0, operand_b};
     assign sub_ext   = {1'b0, operand_a} - {1'b0, operand_b};
     assign add_result = add_ext[31:0];
@@ -83,9 +83,9 @@ module riscv_alu (
     // Shift amount (lower 5 bits of operand_b per RISC-V spec)
     assign shamt = operand_b[4:0];
 
-    // ----------------------------------------------------------
+  
     // Flag generation
-    // ----------------------------------------------------------
+   
     // Carry: from adder or subtractor depending on operation
     assign carry_out = (alu_op == ALU_ADD) ? add_ext[32] :
                        (alu_op == ALU_SUB) ? sub_ext[32] : 1'b0;
@@ -104,9 +104,9 @@ module riscv_alu (
     assign negative = result[31];
     assign zero     = (result == 32'h0);
 
-    // ----------------------------------------------------------
+   
     // Main ALU combinational block
-    // ----------------------------------------------------------
+    
     always @(*) begin
         case (alu_op)
             ALU_ADD  : result = add_result;
