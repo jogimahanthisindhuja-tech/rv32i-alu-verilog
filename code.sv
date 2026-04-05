@@ -255,6 +255,275 @@ module riscv_alu_tb;
         $finish;
     end
 
+    // ** .xdc file**  
+    Digilent Basys3  —  XDC Constraints for riscv_alu
+##  Device : XC7A35T-1CPG236C  (Artix-7)
+##  Tool   : Vivado 2020.x / 2022.x
+##
+##  I/O Mapping Strategy
+##  --------------------
+##  operand_a[31:0]  →  SW[15:0]  (lower 16 bits only; upper 16 tied to 0 in wrapper)
+##  operand_b[31:0]  →  SW[15:0]  shared via mode select (see wrapper note)
+##  alu_op[3:0]      →  SW[15:12] (top 4 switches select operation)
+##
+##  Practical mapping for standalone ALU demo (wrapper required):
+##    SW[7:0]   → operand_a[7:0]   (8-bit operands for demo)
+##    SW[11:8]  → operand_b[3:0]   (lower nibble of operand_b / shift amount)
+##    SW[15:12] → alu_op[3:0]
+##
+##  Outputs (LEDs):
+##    LED[15:0] → result[15:0]     (lower 16 bits of 32-bit result)
+##    LED[15]   → negative flag    (repurposed when result display not needed)
+##
+##  7-Segment Display:
+##    AN[3:0]  → digit enables
+##    SEG[6:0] → segment drive (active-low on Basys3)
+##    DP       → decimal point
+##
+##  Flags on dedicated LEDs (requires top-level wrapper):
+##    LED[0]   → zero
+##    LED[1]   → overflow
+##    LED[2]   → carry_out
+##    LED[3]   → negative
+
+
+## ============================================================
+##  CLOCK  (100 MHz on-board oscillator — W5)
+##  The ALU is purely combinational; clock is used by any
+##  wrapper registers / debounce / display controller.
+## ============================================================
+set_property PACKAGE_PIN W5   [get_ports clk] set_property IOSTANDARD  LVCMOS33 [get_ports clk]
+create_clock -add -name sys_clk_pin -period 10.000 -waveform {0 5} [get_ports clk]
+
+## ============================================================
+##  SWITCHES  SW[15:0]
+##  SW[7:0]   → operand_a[7:0]
+##  SW[11:8]  → operand_b[3:0]   (also used as shift amount B[4:0])
+##  SW[15:12] → alu_op[3:0]
+## ============================================================
+## SW[0] — operand_a[0]
+set_property PACKAGE_PIN V17 [get_ports {operand_a[0]} set_property IOSTANDARD LVCMOS33 [get_ports {operand_a[0]}]
+
+## SW[1] — operand_a[1]
+set_property PACKAGE_PIN V16 [get_ports {operand_a[1]}] set_property IOSTANDARD LVCMOS33 [get_ports {operand_a[1]}]
+
+## SW[2] — operand_a[2]
+set_property PACKAGE_PIN W16 [get_ports {operand_a[2]}] set_property IOSTANDARD LVCMOS33 [get_ports {operand_a[2]}]
+
+## SW[3] — operand_a[3]
+set_property PACKAGE_PIN W17 [get_ports {operand_a[3]}] set_property IOSTANDARD LVCMOS33 [get_ports {operand_a[3]}]
+
+## SW[4] — operand_a[4]
+set_property PACKAGE_PIN W15 [get_ports {operand_a[4]}] set_property IOSTANDARD LVCMOS33 [get_ports {operand_a[4]}]
+
+## SW[5] — operand_a[5]
+set_property PACKAGE_PIN V15 [get_ports {operand_a[5]}] set_property IOSTANDARD LVCMOS33 [get_ports {operand_a[5]}]
+
+## SW[6] — operand_a[6]
+set_property PACKAGE_PIN W14 [get_ports {operand_a[6]}] set_property IOSTANDARD LVCMOS33 [get_ports {operand_a[6]}]
+
+## SW[7] — operand_a[7]
+set_property PACKAGE_PIN W13 [get_ports {operand_a[7]}] set_property IOSTANDARD LVCMOS33 [get_ports {operand_a[7]}]
+
+## SW[8] — operand_b[0]
+ set_property PACKAGE_PIN V2  [get_ports {operand_b[0]}] set_property IOSTANDARD LVCMOS33 [get_ports {operand_b[0]}]
+
+## SW[9] — operand_b[1]
+set_property PACKAGE_PIN T3  [get_ports {operand_b[1]}] set_property IOSTANDARD LVCMOS33 [get_ports {operand_b[1]}]
+
+## SW[10] — operand_b[2]
+set_property PACKAGE_PIN T2  [get_ports {operand_b[2]}] set_property IOSTANDARD LVCMOS33 [get_ports {operand_b[2]}]
+
+## SW[11] — operand_b[3]
+set_property PACKAGE_PIN R3  [get_ports {operand_b[3]}] set_property IOSTANDARD LVCMOS33 [get_ports {operand_b[3]}]
+
+## SW[12] — alu_op[0]
+set_property PACKAGE_PIN W2  [get_ports {alu_op[0]}] set_property IOSTANDARD LVCMOS33 [get_ports {alu_op[0]}]
+
+## SW[13] — alu_op[1]
+ set_property PACKAGE_PIN U1  [get_ports {alu_op[1]}] set_property IOSTANDARD LVCMOS33 [get_ports {alu_op[1]}]
+
+## SW[14] — alu_op[2]
+set_property PACKAGE_PIN T1  [get_ports {alu_op[2]}] set_property IOSTANDARD LVCMOS33 [get_ports {alu_op[2]}]
+
+## SW[15] — alu_op[3]
+set_property PACKAGE_PIN R2  [get_ports {alu_op[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {alu_op[3]}]
+
+## ============================================================
+##  LEDs  LD[15:0]
+##  LD[7:0]  → result[7:0]   (lower byte of ALU result)
+##  LD[3:0]  → flags (zero, overflow, carry_out, negative)
+##            (share lower LEDs — choose in wrapper)
+## ============================================================
+## LD[0] — result[0] / zero flag
+set_property PACKAGE_PIN U16 [get_ports {result[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {result[0]}]
+
+## LD[1] — result[1] / overflow
+set_property PACKAGE_PIN E19 [get_ports {result[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {result[1]}]
+
+## LD[2] — result[2] / carry_out
+set_property PACKAGE_PIN U19 [get_ports {result[2]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {result[2]}]
+
+## LD[3] — result[3] / negative
+set_property PACKAGE_PIN V19 [get_ports {result[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {result[3]}]
+
+## LD[4] — result[4]
+set_property PACKAGE_PIN W18 [get_ports {result[4]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {result[4]}]
+
+## LD[5] — result[5]
+set_property PACKAGE_PIN U15 [get_ports {result[5]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {result[5]}]
+
+## LD[6] — result[6]
+set_property PACKAGE_PIN U14 [get_ports {result[6]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {result[6]}]
+
+## LD[7] — result[7]
+set_property PACKAGE_PIN V14 [get_ports {result[7]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {result[7]}]
+
+## LD[8] — result[8]
+set_property PACKAGE_PIN V13 [get_ports {result[8]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {result[8]}]
+
+## LD[9] — result[9]
+set_property PACKAGE_PIN V3  [get_ports {result[9]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {result[9]}]
+
+## LD[10] — result[10]
+set_property PACKAGE_PIN W3  [get_ports {result[10]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {result[10]}]
+
+## LD[11] — result[11]
+set_property PACKAGE_PIN U3  [get_ports {result[11]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {result[11]}]
+
+## LD[12] — result[12]
+set_property PACKAGE_PIN P3  [get_ports {result[12]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {result[12]}]
+
+## LD[13] — result[13] / zero flag indicator
+set_property PACKAGE_PIN N3  [get_ports {result[13]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {result[13]}]
+
+## LD[14] — overflow flag
+set_property PACKAGE_PIN P1  [get_ports {overflow}]
+set_property IOSTANDARD LVCMOS33 [get_ports {overflow}]
+
+## LD[15] — zero flag
+set_property PACKAGE_PIN L1  [get_ports {zero}]
+set_property IOSTANDARD LVCMOS33 [get_ports {zero}]
+
+## ============================================================
+##  7-SEGMENT DISPLAY
+##  4 digits, active-low segments and anodes
+## ============================================================
+## Cathode segments (active-low)
+set_property PACKAGE_PIN W7  [get_ports {seg[0]}]   ;# CA
+set_property IOSTANDARD LVCMOS33 [get_ports {seg[0]}]
+
+set_property PACKAGE_PIN W6  [get_ports {seg[1]}]   ;# CB
+set_property IOSTANDARD LVCMOS33 [get_ports {seg[1]}]
+
+set_property PACKAGE_PIN U8  [get_ports {seg[2]}]   ;# CC
+set_property IOSTANDARD LVCMOS33 [get_ports {seg[2]}]
+
+set_property PACKAGE_PIN V8  [get_ports {seg[3]}]   ;# CD
+set_property IOSTANDARD LVCMOS33 [get_ports {seg[3]}]
+
+set_property PACKAGE_PIN U5  [get_ports {seg[4]}]   ;# CE
+set_property IOSTANDARD LVCMOS33 [get_ports {seg[4]}]
+
+set_property PACKAGE_PIN V5  [get_ports {seg[5]}]   ;# CF
+set_property IOSTANDARD LVCMOS33 [get_ports {seg[5]}]
+
+set_property PACKAGE_PIN U7  [get_ports {seg[6]}]   ;# CG
+set_property IOSTANDARD LVCMOS33 [get_ports {seg[6]}]
+
+## Decimal point
+set_property PACKAGE_PIN V7  [get_ports dp]
+set_property IOSTANDARD LVCMOS33 [get_ports dp]
+
+## Anode enables (active-low, one per digit)
+set_property PACKAGE_PIN U2  [get_ports {an[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {an[0]}]
+
+set_property PACKAGE_PIN U4  [get_ports {an[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {an[1]}]
+
+set_property PACKAGE_PIN V4  [get_ports {an[2]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {an[2]}]
+
+set_property PACKAGE_PIN W4  [get_ports {an[3]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {an[3]}]
+
+## ============================================================
+##  BUTTONS  (active-high on Basys3)
+##  BTNC → reset
+##  BTNL → load operand_a  (if using register-based wrapper)
+##  BTNR → load operand_b
+## ============================================================
+set_property PACKAGE_PIN U18 [get_ports reset]
+set_property IOSTANDARD LVCMOS33 [get_ports reset]
+
+set_property PACKAGE_PIN W19 [get_ports btn_load_a]
+set_property IOSTANDARD LVCMOS33 [get_ports btn_load_a]
+
+set_property PACKAGE_PIN T17 [get_ports btn_load_b]
+set_property IOSTANDARD LVCMOS33 [get_ports btn_load_b]
+
+set_property PACKAGE_PIN T18 [get_ports btn_up]
+set_property IOSTANDARD LVCMOS33 [get_ports btn_up]
+
+set_property PACKAGE_PIN U17 [get_ports btn_down]
+set_property IOSTANDARD LVCMOS33 [get_ports btn_down]
+
+## ============================================================
+##  TIMING CONSTRAINTS
+##  The ALU is combinational. Constraints below set realistic
+##  input/output delay budgets relative to the 100 MHz clock.
+## ============================================================
+
+## Input delay — switches settle within 2 ns of clock edge
+set_input_delay  -clock sys_clk_pin -max 2.000 [get_ports {operand_a[*]}]
+set_input_delay  -clock sys_clk_pin -max 2.000 [get_ports {operand_b[*]}]
+set_input_delay  -clock sys_clk_pin -max 2.000 [get_ports {alu_op[*]}]
+set_input_delay  -clock sys_clk_pin -min 0.500 [get_ports {operand_a[*]}]
+set_input_delay  -clock sys_clk_pin -min 0.500 [get_ports {operand_b[*]}]
+set_input_delay  -clock sys_clk_pin -min 0.500 [get_ports {alu_op[*]}]
+
+## Output delay — LED / display loads need data 2 ns before clock
+set_output_delay -clock sys_clk_pin -max 2.000 [get_ports {result[*]}]
+set_output_delay -clock sys_clk_pin -max 2.000 [get_ports zero]
+set_output_delay -clock sys_clk_pin -max 2.000 [get_ports overflow]
+set_output_delay -clock sys_clk_pin -min 0.500 [get_ports {result[*]}]
+set_output_delay -clock sys_clk_pin -min 0.500 [get_ports zero]
+set_output_delay -clock sys_clk_pin -min 0.500 [get_ports overflow]
+
+## False path on asynchronous reset button (debounced in wrapper)
+set_false_path -from [get_ports reset]
+
+## False paths on all pushbuttons (async inputs, debounced in RTL)
+set_false_path -from [get_ports btn_load_a]
+set_false_path -from [get_ports btn_load_b]
+set_false_path -from [get_ports btn_up]
+set_false_path -from [get_ports btn_down]
+
+## ============================================================
+##  CONFIGURATION / BITSTREAM
+## ============================================================
+set_property CFGBVS VCCO                    [current_design]
+set_property CONFIG_VOLTAGE 3.3             [current_design]
+set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]
+## ============================================================
+
+
 endmodule
 
 `endif  // SIMULATION
