@@ -97,5 +97,4 @@ This ALU module can be integrated into:
 - Verilog HDL
 - Simulation tools (e.g., Icarus Verilog, ModelSim, Vivado)
 
----
 
